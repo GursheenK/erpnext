@@ -712,6 +712,7 @@ frappe.ui.form.on('Payment Entry', {
 
 	get_outstanding_documents: function(frm, filters, get_outstanding_invoices, get_orders_to_be_billed) {
 		frm.clear_table("references");
+		let split_invoices = 0;
 
 		if(!frm.doc.party) {
 			return;
@@ -727,7 +728,8 @@ frappe.ui.form.on('Payment Entry', {
 			"payment_type": frm.doc.payment_type,
 			"party": frm.doc.party,
 			"party_account": frm.doc.payment_type=="Receive" ? frm.doc.paid_from : frm.doc.paid_to,
-			"cost_center": frm.doc.cost_center
+			"cost_center": frm.doc.cost_center,
+			"total_amount": frm.doc.payment_type=="Receive" ? frm.doc.paid_amount : frm.doc.received_amount,
 		}
 
 		for (let key in filters) {
@@ -750,9 +752,10 @@ frappe.ui.form.on('Payment Entry', {
 			},
 			callback: function(r, rt) {
 				if(r.message) {
+					split_invoices = r.message[1];
 					var total_positive_outstanding = 0;
 					var total_negative_outstanding = 0;
-					$.each(r.message, function(i, d) {
+					$.each(r.message[0], function(i, d) {
 						var c = frm.add_child("references");
 						c.reference_doctype = d.voucher_type;
 						c.reference_name = d.voucher_no;
@@ -804,7 +807,7 @@ frappe.ui.form.on('Payment Entry', {
 				}
 
 				frm.events.allocate_party_amount_against_ref_docs(frm,
-					(frm.doc.payment_type=="Receive" ? frm.doc.paid_amount : frm.doc.received_amount));
+					(frm.doc.payment_type=="Receive" ? frm.doc.paid_amount : frm.doc.received_amount), 0, split_invoices);
 
 			}
 		});
@@ -818,7 +821,7 @@ frappe.ui.form.on('Payment Entry', {
 		return ["Sales Invoice", "Purchase Invoice"];
 	},
 
-	allocate_party_amount_against_ref_docs: function(frm, paid_amount, paid_amount_change) {
+	allocate_party_amount_against_ref_docs: function(frm, paid_amount, paid_amount_change, split_invoices=0) {
 		var total_positive_outstanding_including_order = 0;
 		var total_negative_outstanding = 0;
 		var total_deductions = frappe.utils.sum($.map(frm.doc.deductions || [],
@@ -873,7 +876,7 @@ frappe.ui.form.on('Payment Entry', {
 				//If allocate payment amount checkbox is unchecked, set zero to allocate amount
 				row.allocated_amount = 0;
 
-			} else if (frappe.flags.allocate_payment_amount != 0 && (!row.allocated_amount || paid_amount_change)) {
+			} else if (frappe.flags.allocate_payment_amount != 0 && (!split_invoices && !row.allocated_amount || paid_amount_change)) {
 				if (row.outstanding_amount > 0 && allocated_positive_outstanding >= 0) {
 					row.allocated_amount = (row.outstanding_amount >= allocated_positive_outstanding) ?
 						allocated_positive_outstanding : row.outstanding_amount;
