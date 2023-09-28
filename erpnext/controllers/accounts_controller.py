@@ -2526,7 +2526,6 @@ def get_advance_payment_entries(
 			condition,
 		)
 		q = q.select((payment_entry.unallocated_amount).as_("amount"))
-		q = q.where(payment_entry.unallocated_amount > 0)
 
 		unallocated = list(q.run(as_dict=True))
 		payment_entries += unallocated
@@ -2556,6 +2555,7 @@ def get_common_query(
 		.where(payment_entry.party_type == party_type)
 		.where(payment_entry.party == party)
 		.where(payment_entry.docstatus == 1)
+		.where(payment_entry.unallocated_amount > 0)
 	)
 
 	if payment_type == "Receive":
