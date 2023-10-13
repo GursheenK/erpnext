@@ -57,7 +57,9 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 	}
 	"""
 
+	print(args)
 	args = process_args(args)
+	print(args)
 	for_validate = process_string_args(for_validate)
 	overwrite_warehouse = process_string_args(overwrite_warehouse)
 	item = frappe.get_cached_doc("Item", args.item_code)
@@ -606,6 +608,7 @@ def _get_item_tax_template(args, taxes, out=None, for_validate=False):
 
 	# all templates have validity and no template is valid
 	if not taxes_with_validity and (not taxes_with_no_validity):
+		out["item_tax_template"] = ""
 		return None
 
 	# do not change if already a valid template
