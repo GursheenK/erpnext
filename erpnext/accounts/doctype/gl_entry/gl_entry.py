@@ -66,6 +66,7 @@ class GLEntry(Document):
 		transaction_exchange_rate: DF.Float
 		voucher_detail_no: DF.Data | None
 		voucher_no: DF.DynamicLink | None
+		voucher_subtype: DF.SmallText | None
 		voucher_type: DF.Link | None
 	# end: auto-generated types
 
